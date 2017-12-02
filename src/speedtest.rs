@@ -180,11 +180,11 @@ impl SpeedTestServersConfig {
 
 pub fn download_configuration() -> ::Result<Response> {
     info!("Downloading Configuration from speedtest.net");
-    let client = Client::new().unwrap();
+    let client = Client::new();
     // Creating an outgoing request.
     let res = try!(client.get("http://www.speedtest.net/speedtest-config.php")
         .header(Connection::close())
-        .header(UserAgent(USER_AGENT.to_owned()))
+        .header(UserAgent::new(USER_AGENT.to_owned()))
         .send());
     info!("Downloaded Configuration from speedtest.net");
     Ok(res)
@@ -201,10 +201,10 @@ pub fn get_configuration() -> ::Result<SpeedTestConfig> {
 
 pub fn download_server_list() -> ::Result<Response> {
     info!("Download Server List");
-    let client = Client::new().unwrap();
+    let client = Client::new();
     let server_res = try!(client.get("http://www.speedtest.net/speedtest-servers.php")
         .header(Connection::close())
-        .header(UserAgent(USER_AGENT.to_string()))
+        .header(UserAgent::new(USER_AGENT.to_string()))
         .send());
     info!("Downloaded Server List");
     Ok(server_res)
@@ -241,7 +241,7 @@ pub struct SpeedTestLatencyTestResult<'a> {
 pub fn get_best_server_based_on_latency(servers: &[SpeedTestServer])
                                         -> ::Result<SpeedTestLatencyTestResult> {
     info!("Testing for fastest server");
-    let client = Client::new().unwrap();
+    let client = Client::new();
     let mut fastest_server = None;
     let mut fastest_latency = Duration::max_value();
     for server in servers {
@@ -255,7 +255,7 @@ pub fn get_best_server_based_on_latency(servers: &[SpeedTestServer])
             let start_time = now();
             let res = try!(client.get(&latency_path)
                 .header(Connection::close())
-                .header(UserAgent(USER_AGENT.to_owned()))
+                .header(UserAgent::new(USER_AGENT.to_owned()))
                 .send());
             res.bytes().last();
             let latency_measurement = now() - start_time;
@@ -332,10 +332,10 @@ pub fn test_download_with_progress<F>(server: &SpeedTestServer, f: F) -> ::Resul
                         info!("Canceled Downloading {} of {}", size, path.display());
                         return 0;
                     }
-                    let client = Client::new().unwrap();
+                    let client = Client::new();
                     let mut res = client.get(path.to_str().unwrap())
                         .header(Connection::close())
-                        .header(UserAgent(USER_AGENT.to_owned()))
+                        .header(UserAgent::new(USER_AGENT.to_owned()))
                         .send()
                         .unwrap();
                     let mut buffer = [0; 10240];
@@ -410,12 +410,12 @@ pub fn test_upload_with_progress<F>(server: &SpeedTestServer, f: F) -> ::Result<
                     return 0;
                 }
                 let body_loop = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".chars().cycle();
-                let client = Client::new().unwrap();
+                let client = Client::new();
                 let body = format!("content1={}", body_loop.take(size).collect::<String>());
                 let mut res = client.post(path.to_str().unwrap())
-                    .body(body.as_bytes())
+                    .body(body.as_bytes().to_owned())
                     .header(Connection::close())
-                    .header(UserAgent(USER_AGENT.to_owned()))
+                    .header(UserAgent::new(USER_AGENT.to_owned()))
                     .send()
                     .unwrap();
                 let mut buffer = [0; 10240];
@@ -508,12 +508,12 @@ pub fn get_share_url(request: &ShareUrlRequest) -> String {
 
     info!("Share Body Request: {:?}", body);
 
-    let client = Client::new().unwrap();
+    let client = Client::new();
     let res = client.post("http://www.speedtest.net/api/api.php")
-        .header(UserAgent(USER_AGENT.to_owned()))
-        .header(Referer("http://c.speedtest.net/flash/speedtest.swf".to_owned()))
+        .header(UserAgent::new(USER_AGENT.to_owned()))
+        .header(Referer::new("http://c.speedtest.net/flash/speedtest.swf".to_owned()))
         .header(ContentType::form_url_encoded())
-        .body(body.as_bytes())
+        .body(body.as_bytes().to_owned())
         .send();
     let mut encode_return = String::new();
     res.unwrap().read_to_string(&mut encode_return).unwrap();
